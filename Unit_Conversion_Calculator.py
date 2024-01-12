@@ -6,7 +6,9 @@ All Rights Reserved
 Revision #: 0
 """
 
-def userInput(): #Function to get the users input numeric amount, input unit type, desired unit output
+test = 'This is a test for PR'
+
+def userInput(): #Function to get the users input numeric amount, input unit type, desired unit output.
     A = metricUnit
     B = imperialUnit
     
