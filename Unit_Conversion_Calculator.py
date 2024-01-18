@@ -3,7 +3,7 @@ Project Name: Unit Conversion Calculator
 Date: 12/7/2023
 Author: Liam Cassell
 All Rights Reserved 
-Revision #: 0
+Revision #: 1 (Updated program as to provide campatiblity for testing, fixed imperial volume calculations)
 """
 
 def userInput(): #Function to get the users input numeric amount, input unit type, desired unit output
@@ -39,7 +39,7 @@ def unitMapReturn(inputUnit, outputUnit, numericInput): #Creates and input and o
         'FOOT':  { 'TYPE' : 'LENGTH', 'SYSTEM' : 'IMPERIAL', 'ABBREVIATED' : 'ft', 'BASE UNIT' : B.FT, 'CONVERSION RATIO' : D.lengthI2M},
         'MILE' : { 'TYPE' : 'LENGTH', 'SYSTEM' : 'IMPERIAL', 'ABBREVIATED' : 'mi', 'BASE UNIT' : B.MI, 'CONVERSION RATIO' : D.lengthI2M},
 
-        'FLUID OUNCES' : { 'TYPE' : 'VOLUME', 'SYSTEM' : 'IMPERIAL', 'ABBREVIATED' : 'fl-oz', 'BASE UNIT' : B.FLOZ, 'CONVERSION RATIO' : D.volumeI2M}, #Volume
+        'FLUID OUNCE' : { 'TYPE' : 'VOLUME', 'SYSTEM' : 'IMPERIAL', 'ABBREVIATED' : 'fl-oz', 'BASE UNIT' : B.FLOZ, 'CONVERSION RATIO' : D.volumeI2M}, #Volume
         'TABLESPOON' : { 'TYPE' : 'VOLUME', 'SYSTEM' : 'IMPERIAL', 'ABBREVIATED' : 'tbsp', 'BASE UNIT' : B.TBSP, 'CONVERSION RATIO' : D.volumeI2M},
         'TEASPOON' : { 'TYPE' : 'VOLUME', 'SYSTEM' : 'IMPERIAL', 'ABBREVIATED' : 'tsp', 'BASE UNIT' :  B.TSP, 'CONVERSION RATIO' : D.volumeI2M},
         'CUP' : { 'TYPE' : 'VOLUME', 'SYSTEM' : 'IMPERIAL', 'ABBREVIATED' : 'cu', 'BASE UNIT' :  B.CU, 'CONVERSION RATIO' : D.volumeI2M},
@@ -67,13 +67,20 @@ def unitLogic(inputUnitMap, outputUnitMap): #Logic to determine which type of co
         if inputUnitMap['TYPE'] ==  'TEMPERATURE': #If tempature then start tempature conversion
             C = tempatureConversion(inputUnitMap, outputUnitMap) #Initialize the tempatureConversion class
             newBaseValue = C.beseUnitTempConversion(inputUnitMap['INPUT VALUE'], inputUnitMap['ABBREVIATED']) #Converts the input to the base unit of either C or F depending on the system, reutrns the result for more calcualtions
-            newValue = C.tempatureLogic(newBaseValue) #Handles the logic of the tempature conversion and returns the result of the conversion
-            print(f'The Result is: {newValue} {outputUnitMap['ABBREVIATED']}')
+            newBase = C.tempatureLogic(newBaseValue) #Handles the logic of the tempature conversion and returns the result of the conversion
+            prefix = '' #Sets prefix to nothing for these calcualtions
+            newUnit = outputUnitMap['ABBREVIATED'] #Sets the output of the new unit to the abbrecaited version users desired output
+
         else: #Else calculate everything else
-              systemConversionType(inputUnitMap, outputUnitMap) #Determine the type of calculation that needs to be performed based on the system, then call the appropiate calculation for length, volume, or weight
+            newBase, newUnit, prefix = systemConversionType(inputUnitMap, outputUnitMap) #Determine the type of calculation that needs to be performed based on the system, then call the appropiate calculation for length, volume, or weight
+
     else: #Else restart program 
         print('The types are not compatible') 
-        main()
+        main() #Restart program
+    
+    newBase = round(newBase, 3) #Return only 3 decimal places
+    return newBase, newUnit, prefix #Return all 
+
 
 class tempatureConversion: #A class to organize temperature conversion logic, variables and calculations
     def __init__(self,inputUnitMap,outputUnitMap)-> None: #Initialize class varibles
@@ -153,11 +160,11 @@ class tempatureConversion: #A class to organize temperature conversion logic, va
     
 class systemUnitConversions():# Holds all the units for the converions between the metric and imperial system
     lengthM2I = 39.3701 #Metric to imperial: Meter to inch
-    volumeM2I = 33.814 #Liter to fl-oz
+    volumeM2I = 202.8841 #Liter to tsp
     weightM2I = 0.035274 #Gram to oz
 
     lengthI2M = 0.0254 #Metric to imperial: Inch to meter
-    volumeI2M = 0.0295735 #fl-oz to liter
+    volumeI2M = 0.00492892 #tsp to liter
     weightI2M = 28.3495 #oz to gram
 
 class metricUnit(): #Holds all the information needed for metric prefixes/scale
@@ -169,7 +176,7 @@ class metricUnit(): #Holds all the information needed for metric prefixes/scale
 
 class imperialUnit(): #Holds data needed for imperial unit converion
     IN,  FT, MI = 1, 12, 63360 #Length
-    FLOZ, TBSP, TSP, CU, PT, QT, GAL = 1, 2, 6, 8, 16, 32, 128 #Volume
+    TSP, TBSP, FLOZ, CU, PT, QT, GAL = 1, 3, 6, 48, 96, 192, 768 #Volume
     OZ, LB, T  = 1, 16, 32000 #Weight
     F, R =  1, 459.67  #Temp
 
@@ -180,19 +187,20 @@ class imperialUnit(): #Holds data needed for imperial unit converion
 
 def systemConversionType(inputUnitMap, outputUnitMap): #Determine the type of calculation that needs to be performed based on the system, then call the appropiate calculation for length, volume, or weight
     A = metricUnit
+    prefix = '' # sets prefix to nothing 
     
     if (inputUnitMap['SYSTEM'] == 'METRIC' )  and (outputUnitMap['SYSTEM'] == 'IMPERIAL'): #If Metric to Imperial then perform calculation
         newBaseUnit = systemConversion(inputUnitMap) #Converts from one system to another using conversions ratio and returns the result
         newUnitMap = inputUnitMap #To keep a pure unit map
         newUnitMap['INPUT VALUE'] = newBaseUnit #Assigns a new input value as to call the same function as before
         newUnit, newBase = imperialBaseUnitConversion(newUnitMap, outputUnitMap) #Uses information found an in unit map calcaulates the unit conversion ratio, returns resulting base and new unit type
-        print(f'The result is: {newBase} {newUnit}')
+        
 
     elif (inputUnitMap['SYSTEM'] == 'METRIC' )  and (outputUnitMap['SYSTEM'] == 'METRIC'): #If Metric to Metric then perform calculation
         base = metricBaseUnitConversion(inputUnitMap) #Fucntion to figure out the base prefix
         prefix = A.metricPrefixMap[base]
-        inputValueConversion = inputUnitMap['INPUT VALUE'] / base
-        print(f'The result is: {inputValueConversion} {prefix}{outputUnitMap['ABBREVIATED']}')
+        newBase = inputUnitMap['INPUT VALUE'] / base
+        newUnit = outputUnitMap['ABBREVIATED'] #Sets the output of the new unit to the abbrecaited version users desired output
        
     elif (inputUnitMap['SYSTEM'] == 'IMPERIAL' )  and (outputUnitMap['SYSTEM'] == 'METRIC'): #If Imperial to Metric then perform calculation
         newBaseUnit = systemConversion(inputUnitMap) #Converts from one system to another using conversions ratio and returns the result
@@ -200,13 +208,13 @@ def systemConversionType(inputUnitMap, outputUnitMap): #Determine the type of ca
         newUnitMap['INPUT VALUE'] = newBaseUnit #Assigns a new input value as to call the same function as before
         base = metricBaseUnitConversion(newUnitMap) #Fucntion to figure out the base prefix
         prefix = A.metricPrefixMap[base] #Get the metric prefix
-        inputValueConversion = inputUnitMap['INPUT VALUE'] / base
-        print(f'The result is: {inputValueConversion} {prefix}{outputUnitMap['ABBREVIATED']}')
-
+        newBase = inputUnitMap['INPUT VALUE'] / base
+        newUnit = outputUnitMap['ABBREVIATED'] #Sets the output of the new unit to the abbrecaited version users desired output
+        
     elif (inputUnitMap['SYSTEM'] == 'IMPERIAL' )  and (outputUnitMap['SYSTEM'] == 'IMPERIAL'): #If Imperial to Imperial then perform calculation
         newUnit, newBase = imperialBaseUnitConversion(inputUnitMap, outputUnitMap) #Uses information found an in unit map calcaulates the unit conversion ratio, returns resulting base and new unit type
-        print(f'The result is: {newBase} {newUnit}')
-    return
+
+    return newBase, newUnit, prefix
 
 
 def systemConversion(inputUnitMap): #Converts from one system to another using conversions ratio and returns the result
@@ -251,14 +259,15 @@ def imperialBaseUnitConversion(inputUnitMap, outputUnitMap): #Uses information f
     #Perform unit conversion
     a = inputValue * baseUnit #Converts the user input to a base unit for calculations
     a = a / baseUnitNew #Converts unit into base unit 
-
     return newUnit, a
 
 
 def main():# Main function
     numericInput, inputUnit, outputUnit = userInput() #Get user inputs
     inputUnitMap, outputUnitMap = unitMapReturn(inputUnit,outputUnit, numericInput) #Get the dictionarys that hold the conversion data
-    unitLogic(inputUnitMap[inputUnit], outputUnitMap [outputUnit]) #Logic to determine which type of conversion will take place, return to main if types are not compatible
+    newBase, newUnit, prefix = unitLogic(inputUnitMap[inputUnit], outputUnitMap [outputUnit]) #Logic to determine which type of conversion will take place, return to main if types are not compatible
+
+    print(f'The result is: {newBase} {prefix}{newUnit}') #Print the result
 
 if __name__ == '__main__':
     main()
